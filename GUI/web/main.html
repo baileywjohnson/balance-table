@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Table</title>
+    <script type="text/javascript" src="/eel.js"></script>
+    <style>
+        .container{
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
+            width: 60%;
+            column-gap: 2px;
+            row-gap: 2px;
+            line-height: 3px;
+            text-align: center;
+            color: black;
+            background-color: white;
+            border: 5px solid #000;
+            justify-items: center;
+            font-family: proxima-nova, sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .btn{
+            background-color: transparent;
+            border: 3px solid #000;
+            border-radius: 5px;
+            width: 180px;
+            height: 35px;
+            font-family: proxima-nova, sans-serif;
+            font-size: 15px;
+            color: white;
+            font-weight: bold;
+            margin-top: 0px;
+        }
+        input[type="submit"].btn:hover{
+            background-color: #eebbc3;
+            cursor: pointer;
+            color: black;
+        }
+    </style>
+</head>
+<body style="background-color: #232946;">
+    <div style="margin:0 auto;">
+        <h1 style="text-align: center; color: hsl(60, 100%, 100%); font-family: proxima-nova, sans-serif; font-size: 45px; margin-bottom: -10px;">Balance Table</h1>
+        <p style="text-align: center; color: #b8c1ec; font-family: proxima-nova, sans-serif; font-size: 20px;">Bailey Johnson</p>
+        <form style="text-align: center; padding-bottom: 30px;" id="launch">
+            <label for="board_size" style="color: white; font-family: proxima-nova, sans-serif; font-size: 18px;">Size (4+):</label>
+            <input type="text" id="board_size" name="boardsize" placeholder="0" style="width: 160px; height: 40px; padding: 20px 20px; text-align: center; font-size: 18px; font-weight: bold; margin: 8px 0; box-sizing: border-box; border-radius: 4px; border: 3px solid #000;"><br><br>
+            <input class="btn" type="submit" value="Submit">
+        </form>
+    </div>
+    <div id="results" style="display: none;">
+        <div class="container" style="margin:0 auto;" id="board"></div>
+        <div style="margin:0 auto; padding-top: 10px;">
+            <p id="cog" style="text-align: center; color: #b8c1ec; font-family: proxima-nova, sans-serif; font-size: 15px;">Center of Gravity (from Bottom Left): </p>
+            <p id="balanced" style="text-align: center; color: #b8c1ec; font-family: proxima-nova, sans-serif; font-size: 15px;">Is it Balanced?: </p>
+        </div>
+    </div>
+    <div id="notes" style="margin:0 auto;">
+        <p id="balanced" style="text-align: center; color: white; font-family: proxima-nova, sans-serif; font-size: 15px; font-weight: bold; margin-top: 50px;">Please wait for current run to complete before submitting another.</p>
+        <p id="balanced" style="text-align: center; color: white; font-family: proxima-nova, sans-serif; font-size: 15px; font-weight: bold; margin-top: 10px;">Re-size the window to expand/shrink the table if necessary (larger table sizes may result in display issues depending on screen resolution).</p>
+    </div>
+</body>
+<footer>
+    <script>
+        const board = document.querySelector("#board");
+        const form = document.querySelector("#launch");
+        const boardSize = document.querySelector("#board_size");
+        const results = document.querySelector("#results");
+        const cog = document.querySelector('#cog');
+        const balanced = document.querySelector('#balanced');
+
+        form.addEventListener('submit', function(e){
+            buildBoard(boardSize.value);
+            e.preventDefault();
+        });
+
+        function buildBoard(boardSize){
+            console.log(boardSize);
+            board.innerHTML = '';
+            let sizeConfig = '';
+            for(i = 0; i < boardSize; i++){
+                sizeConfig += '1fr ';
+            }
+            board.style = `margin:0 auto; grid-template-columns: ${sizeConfig}; grid-template-rows: ${sizeConfig};`;
+            for(i = 0; i < boardSize * boardSize; i++){
+                const newP = document.createElement('p');
+                newP.innerText = "0";
+                newP.id = i;
+                board.appendChild(newP);
+            }
+            results.style = 'display: block;';
+            fillBoard(boardSize);
+        }
+
+        function fillBoard(boardSize){
+            let boardArray = new Uint8Array(boardSize * boardSize);
+            eel.start_table(boardSize);
+
+            eel.expose(updateBoard);
+            function updateBoard(board_res, cog_res, balanced_res){
+                for(i = 0; i < boardSize * boardSize; i++){
+                    if(boardArray[i] !== board_res[i]){
+                        console.log(`Found Updated Position: ${i}`);
+                        let target = document.querySelector(`[id='${i}']`);
+                        target.innerText = board_res[i];
+                        boardArray[i] = board_res[i];
+                        cog.innerHTML = `Center of Gravity (X,Y from Bottom Left):<br><b>${cog_res[0]}, ${cog_res[1]}</b>`;
+                        if (balanced_res){
+                            balanced.innerHTML = "Is it Balanced?: <b><span style='color: green;''>Yes<span/></b>";
+                        }
+                        else{
+                            balanced.innerHTML = "Is it Balanced?: <b><span style='color: red;''>No<span/></b>";
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</footer>
+</html>
